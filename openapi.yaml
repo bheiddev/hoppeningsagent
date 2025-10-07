@@ -562,15 +562,7 @@ paths:
     post:
       operationId: upsertEvents
       summary: Save events to Supabase database
-      description: |
-        Insert or update events in the Supabase database.
-        
-        **CRITICAL**: Use EXACT database schema fields (brewery_id, event_date, start_time, etc.)
-        NOT legacy fields (venue, date, time, location).
-        
-        **is_recurring Examples**:
-        - ✅ TRUE: "Trivia every Tuesday", "Bingo every Friday", "Live Music every Saturday"
-        - ❌ FALSE: "Anniversary Party", "Holiday Event", "Special Release Party", "Annual Festival"
+      description: Insert or update events in the Supabase database. Use EXACT schema fields (brewery_id, event_date, start_time, etc.) NOT legacy fields (venue, date, time, location). is_recurring: TRUE for weekly events, FALSE for annual events.
       security: [{ bearerAuth: [] }]
       requestBody:
         required: true
