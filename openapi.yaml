@@ -23,7 +23,6 @@ info:
     - cost (decimal) - Event cost or null if free
     - is_recurring (boolean) - true ONLY for weekly/recurring events (NOT annual events)
     - description (text) - Event description
- 
     - featured (boolean) - Always false for crawled events
     - created_at (timestamp, auto-generated)
     - updated_at (timestamp, auto-generated)
