@@ -61,8 +61,8 @@ info:
     
     **DO NOT use**: `venue`, `location`, `date`, `time` - these are legacy fields!
 servers:
-  - url: https://subspontaneous-unpronounced-ronnie.ngrok-free.dev
-    description: Production server via ngrok
+  - url: https://hoppeningsagent.onrender.com
+    description: Production server via Render
 paths:
   /ping:
     get:
