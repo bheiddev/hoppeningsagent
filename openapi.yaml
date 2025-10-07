@@ -1,0 +1,656 @@
+openapi: 3.1.0
+info: 
+  title: Hoppenings Agent API
+  version: "1.0.0"
+  description: |
+    API for crawling brewery events and beer releases using Instagram Graph API and web scraping.
+    
+    ## Instagram Integration
+    This API uses the official Instagram Graph API for reliable access to business Instagram accounts.
+    Only business Instagram accounts can be crawled using the `crawlInstagramGraph` action.
+    
+    ## Database Schema
+    
+    The API maps crawled events to the following database tables:
+    
+    ### events_base table (EXACT SCHEMA):
+    - id (uuid, primary key, auto-generated)
+    - brewery_id (uuid, foreign key to breweries.id) - REQUIRED
+    - title (text) - Event title - REQUIRED
+    - event_date (date) - Event date in YYYY-MM-DD format - REQUIRED
+    - start_time (time) - Start time in HH:MM format or null
+    - end_time (time) - End time in HH:MM format or null
+    - cost (decimal) - Event cost or null if free
+    - is_recurring (boolean) - true ONLY for weekly/recurring events (NOT annual events)
+    - description (text) - Event description
+ 
+    - featured (boolean) - Always false for crawled events
+    - created_at (timestamp, auto-generated)
+    - updated_at (timestamp, auto-generated)
+    
+    ### breweries table:
+    - id (uuid, primary key)
+    - name (text) - Brewery name
+    - address (text) - Brewery address
+    
+    ### beer_releases_base table (EXACT SCHEMA):
+    - id (uuid, primary key, auto-generated)
+    - brewery_id (uuid, foreign key to breweries.id) - REQUIRED
+    - beer_name (text) - Beer name - REQUIRED
+    - Type (text) - Beer type (IPA, Stout, etc.) - Note: capitalized in actual schema
+    - release_date (date) - Release date in YYYY-MM-DD format
+    - description (text) - Beer description
+    - ABV (text) - Alcohol by volume percentage - Note: capitalized in actual schema
+    - created_at (timestamp, auto-generated)
+    
+    ## Data Mapping (API Input → Database)
+    
+    **IMPORTANT**: You must provide data in the EXACT database schema format:
+    
+    Input fields → Database fields:
+    - `brewery_id` (uuid) → `brewery_id` (REQUIRED - use brewery UUID)
+    - `title` (string) → `title` (REQUIRED)
+    - `event_date` (YYYY-MM-DD) → `event_date` (REQUIRED)
+    - `start_time` (HH:MM or null) → `start_time`
+    - `end_time` (HH:MM or null) → `end_time`
+    - `cost` (number or null) → `cost`
+    - `is_recurring` (boolean) → `is_recurring`
+    - `description` (string) → `description`
+    - `url` (string) → `url`
+    - `featured` (boolean) → `featured` (always false for crawled events)
+    
+    **DO NOT use**: `venue`, `location`, `date`, `time` - these are legacy fields!
+servers:
+  - url: https://subspontaneous-unpronounced-ronnie.ngrok-free.dev
+    description: Production server via ngrok
+paths:
+  /ping:
+    get:
+      operationId: ping
+      summary: Connectivity test
+      description: Test API connectivity and authentication
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: 
+                  ok: { type: boolean }
+                  msg: { type: string }
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  error: { type: string }
+  /breweries:
+    get:
+      operationId: getBreweries
+      summary: Get all breweries
+      description: Retrieve a list of all breweries in the database with their UUIDs for reference
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: List of breweries
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  breweries:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: 
+                          type: string
+                          format: uuid
+                          description: "Brewery UUID"
+                        name: 
+                          type: string
+                          description: "Brewery name"
+                        address: 
+                          type: string
+                          description: "Brewery address"
+        "401":
+          description: Unauthorized
+        "500":
+          description: Server Error
+  /beer-releases:
+    get:
+      operationId: getBeerReleases
+      summary: Get beer releases from database
+      description: Retrieve existing beer releases from the beer_releases_base table with brewery information
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: brewery_id
+          in: query
+          description: "Filter by brewery UUID"
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          description: "Maximum number of releases to return (default 50)"
+          required: false
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          description: "Number of releases to skip (default 0)"
+          required: false
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: List of beer releases
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  releases:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: 
+                          type: string
+                          format: uuid
+                          description: "Release UUID"
+                        brewery_id: 
+                          type: string
+                          format: uuid
+                          description: "Brewery UUID"
+                        brewery_name: 
+                          type: string
+                          description: "Brewery name"
+                        brewery_address: 
+                          type: string
+                          description: "Brewery address"
+                        beer_name: 
+                          type: string
+                          description: "Beer name"
+                        beer_type: 
+                          type: string
+                          description: "Beer type"
+                        release_date: 
+                          type: string
+                          format: date
+                          description: "Release date"
+                        description: 
+                          type: string
+                          description: "Beer description"
+                        ABV: 
+                          type: string
+                          description: "Alcohol by volume (as text)"
+                        created_at: 
+                          type: string
+                          format: date-time
+                          description: "Creation timestamp"
+                  total: 
+                    type: integer
+                    description: "Total number of releases returned"
+                  limit: 
+                    type: integer
+                    description: "Limit applied"
+                  offset: 
+                    type: integer
+                    description: "Offset applied"
+        "401":
+          description: Unauthorized
+        "500":
+          description: Server Error
+  /events:
+    get:
+      operationId: getEvents
+      summary: Get events from database
+      description: Retrieve existing events from the events_base table with brewery information
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: brewery_id
+          in: query
+          description: Filter events by brewery UUID
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          description: Maximum number of events to return (default 50)
+          required: false
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          description: Number of events to skip for pagination (default 0)
+          required: false
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: List of events
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  events:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: 
+                          type: string
+                          format: uuid
+                          description: "Event UUID"
+                        brewery_id: 
+                          type: string
+                          format: uuid
+                          description: "Brewery UUID"
+                        brewery_name: 
+                          type: string
+                          description: "Brewery name"
+                        brewery_address: 
+                          type: string
+                          description: "Brewery address"
+                        title: 
+                          type: string
+                          description: "Event title"
+                        event_date: 
+                          type: string
+                          format: date
+                          description: "Event date"
+                        start_time: 
+                          type: string
+                          format: time
+                          description: "Start time"
+                        end_time: 
+                          type: string
+                          format: time
+                          description: "End time"
+                        cost: 
+                          type: number
+                          description: "Event cost"
+                        is_recurring: 
+                          type: boolean
+                          description: "true ONLY for weekly/recurring events (NOT annual events)"
+                        description: 
+                          type: string
+                          description: "Event description"
+                        featured: 
+                          type: boolean
+                          description: "Is featured event"
+                        created_at: 
+                          type: string
+                          format: date-time
+                          description: "Creation timestamp"
+                  total: 
+                    type: integer
+                    description: "Total number of events returned"
+                  limit: 
+                    type: integer
+                    description: "Limit applied"
+                  offset: 
+                    type: integer
+                    description: "Offset applied"
+        "401":
+          description: Unauthorized
+        "500":
+          description: Server Error
+  /crawl-instagram-graph:
+    post:
+      operationId: crawlInstagramGraph
+      summary: Crawl Instagram business pages using Graph API
+      description: Extract posts from an Instagram business account using the official Instagram Graph API
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  description: "Instagram business username (with or without @)"
+                  example: "redlegbrewco"
+                limit:
+                  type: integer
+                  description: "Maximum number of posts to retrieve (default 25, max 25)"
+                  default: 25
+                  maximum: 25
+                dryRun:
+                  type: boolean
+                  description: "If true, preview what would be crawled"
+                  default: false
+                extractEvents:
+                  type: boolean
+                  description: "If true, attempt to extract event information from post captions"
+                  default: false
+              required: [username]
+      responses:
+        "200":
+          description: Instagram posts retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  user:
+                    type: object
+                    properties:
+                      username: { type: string }
+                      business_account: { type: boolean }
+                  posts:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: { type: string }
+                        shortcode: { type: string }
+                        caption: { type: string }
+                        timestamp: { type: string, format: date-time }
+                        media_type: { type: string }
+                        media_url: { type: string }
+                        permalink: { type: string }
+                        url: { type: string }
+                  extracted_events:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        source: { type: string }
+                        post_id: { type: string }
+                        post_url: { type: string }
+                        caption: { type: string }
+                        extracted_date: { type: string }
+                        extracted_time: { type: string }
+                        media_url: { type: string }
+                        media_type: { type: string }
+                        timestamp: { type: string, format: date-time }
+                        brewery_username: { type: string }
+                  extracted_releases:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        source: { type: string }
+                        post_id: { type: string }
+                        post_url: { type: string }
+                        caption: { type: string }
+                        beer_name: { type: string }
+                        beer_type: { type: string }
+                        release_date: { type: string }
+                        ABV: { type: number }
+                        description: { type: string }
+                        media_url: { type: string }
+                        media_type: { type: string }
+                        timestamp: { type: string, format: date-time }
+                        brewery_username: { type: string }
+                  total: { type: integer }
+                  events_found: { type: integer }
+                  releases_found: { type: integer }
+                  dryRun: { type: boolean }
+                  source: { type: string }
+                  api_version: { type: string }
+                  note: { type: string }
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "500":
+          description: Server Error
+  /crawl-events:
+    post:
+      operationId: crawlEvents
+      summary: Crawl events from a website
+      description: Extract brewery events and beer releases from a target URL
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                target: 
+                  type: string
+                  description: "Events page URL to crawl"
+                  example: "https://redlegbrewing.com/events/"
+                sinceDays: 
+                  type: integer
+                  description: "Lookback window in days (default: 7)"
+                  default: 7
+                  minimum: 1
+                  maximum: 365
+                dryRun:
+                  type: boolean
+                  description: "If true, return events without processing"
+                  default: false
+              required: [target]
+      responses:
+        "200":
+          description: Events crawled successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  summary: 
+                    type: object
+                    properties:
+                      target: { type: string }
+                      sinceDays: { type: integer }
+                      dryRun: { type: boolean }
+                      eventsFound: { type: integer }
+                      events: 
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            title: { type: string }
+                            date: { type: string }
+                            time: { type: string }
+                            description: { type: string }
+                            url: { type: string }
+                            venue: { type: string }
+                            location: { type: string }
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "500":
+          description: Server Error
+  /upsert-beer-releases:
+    post:
+      operationId: upsertBeerReleases
+      summary: Upsert beer releases to database
+      description: Insert or update beer releases in the beer_releases_base table with deduplication support
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                releases:
+                  type: array
+                  description: "Array of beer release objects to upsert"
+                  items:
+                    type: object
+                    properties:
+                      brewery_id:
+                        type: string
+                        format: uuid
+                        description: "Brewery UUID (required if brewery_name not provided)"
+                      brewery_name:
+                        type: string
+                        description: "Brewery name (required if brewery_id not provided)"
+                      beer_name:
+                        type: string
+                        description: "Beer name (required)"
+                      beer_type:
+                        type: string
+                        description: "Beer type (IPA, Stout, etc.)"
+                      release_date:
+                        type: string
+                        format: date
+                        description: "Release date in YYYY-MM-DD format"
+                      description:
+                        type: string
+                        description: "Beer description"
+                      ABV:
+                        type: number
+                        description: "Alcohol by volume percentage"
+                    required: [beer_name]
+                dryRun:
+                  type: boolean
+                  description: "If true, preview what would be upserted without making changes"
+                  default: false
+              required: [releases]
+      responses:
+        "200":
+          description: Beer releases upserted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  summary:
+                    type: object
+                    properties:
+                      dryRun: { type: boolean }
+                      releasesProcessed: { type: integer }
+                      releasesInserted: { type: integer }
+                      releasesFailed: { type: integer }
+                      releasesDuplicated: { type: integer }
+                      results:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            release: { type: string }
+                            status: { type: string }
+                            id: { type: string }
+                            error: { type: string }
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "500":
+          description: Server Error
+  /upsert-events:
+    post:
+      operationId: upsertEvents
+      summary: Save events to Supabase database
+      description: |
+        Insert or update events in the Supabase database.
+        
+        **CRITICAL**: Use EXACT database schema fields (brewery_id, event_date, start_time, etc.)
+        NOT legacy fields (venue, date, time, location).
+        
+        **is_recurring Examples**:
+        - ✅ TRUE: "Trivia every Tuesday", "Bingo every Friday", "Live Music every Saturday"
+        - ❌ FALSE: "Anniversary Party", "Holiday Event", "Special Release Party", "Annual Festival"
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                events:
+                  type: array
+                  description: "Array of events to save"
+                  items:
+                    type: object
+                    properties:
+                      brewery_id: 
+                        type: string
+                        format: uuid
+                        description: "Brewery UUID (REQUIRED)"
+                      title: 
+                        type: string
+                        description: "Event title (REQUIRED)"
+                      event_date: 
+                        type: string
+                        format: date
+                        description: "Event date in YYYY-MM-DD format (REQUIRED)"
+                      start_time: 
+                        type: string
+                        format: time
+                        description: "Start time in HH:MM format or null"
+                      end_time: 
+                        type: string
+                        format: time
+                        description: "End time in HH:MM format or null"
+                      cost: 
+                        type: number
+                        description: "Event cost or null if free"
+                      is_recurring: 
+                        type: boolean
+                        description: "true ONLY for weekly/recurring events (NOT annual events like anniversary parties)"
+                      description: 
+                        type: string
+                        description: "Event description"
+                      featured: 
+                        type: boolean
+                        description: "Always false for crawled events"
+                    required: [brewery_id, title, event_date]
+                dryRun:
+                  type: boolean
+                  description: "If true, preview what would be saved"
+                  default: false
+              required: [events]
+      responses:
+        "200":
+          description: Events saved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  summary: 
+                    type: object
+                    properties:
+                      dryRun: { type: boolean }
+                      eventsProcessed: { type: integer }
+                      eventsInserted: { type: integer }
+                      events: 
+                        type: array
+                        items:
+                          type: object
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "500":
+          description: Server Error
+components:
+  schemas: {}
+  securitySchemes:
+    bearerAuth: 
+      type: http
+      scheme: bearer
+      description: "Use 'Bearer Brooklyn1993!' as the Authorization header value"

@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: hoppenings-agent
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: HOPP_API_KEY
+        value: Brooklyn1993!
+      - key: PORT
+        value: 10000
+      - key: SUPABASE_URL
+        value: YOUR_SUPABASE_URL_HERE
+      - key: SUPABASE_ANON_KEY
+        value: YOUR_SUPABASE_ANON_KEY_HERE
