@@ -21,8 +21,9 @@ info:
     - start_time (time) - Start time in HH:MM format or null
     - end_time (time) - End time in HH:MM format or null
     - cost (decimal) - Event cost or null if free
-    - is_recurring (boolean) - true ONLY for weekly/recurring events (NOT annual events)
+    - is_recurring (boolean) - true for weekly/recurring events
     - description (text) - Event description
+ 
     - featured (boolean) - Always false for crawled events
     - created_at (timestamp, auto-generated)
     - updated_at (timestamp, auto-generated)
@@ -59,7 +60,6 @@ info:
     - `featured` (boolean) → `featured` (always false for crawled events)
     
     **DO NOT use**: `venue`, `location`, `date`, `time` - these are legacy fields!
-
 servers:
   - url: https://hoppeningsagent.onrender.com
     description: Production server via Render
@@ -288,7 +288,7 @@ paths:
                           description: "Event cost"
                         is_recurring: 
                           type: boolean
-                          description: "true ONLY for weekly/recurring events (NOT annual events)"
+                          description: "Is recurring event"
                         description: 
                           type: string
                           description: "Event description"
@@ -562,7 +562,11 @@ paths:
     post:
       operationId: upsertEvents
       summary: Save events to Supabase database
-      description: Insert or update events in the Supabase database. Use EXACT schema fields (brewery_id, event_date, start_time, etc.) NOT legacy fields (venue, date, time, location). is_recurring: TRUE for weekly events, FALSE for annual events.
+      description: |
+        Insert or update events in the Supabase database.
+        
+        **CRITICAL**: Use EXACT database schema fields (brewery_id, event_date, start_time, etc.)
+        NOT legacy fields (venue, date, time, location).
       security: [{ bearerAuth: [] }]
       requestBody:
         required: true
@@ -601,7 +605,7 @@ paths:
                         description: "Event cost or null if free"
                       is_recurring: 
                         type: boolean
-                        description: "true ONLY for weekly/recurring events (NOT annual events like anniversary parties)"
+                        description: "true for weekly/recurring events"
                       description: 
                         type: string
                         description: "Event description"
