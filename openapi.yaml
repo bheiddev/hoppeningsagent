@@ -59,6 +59,7 @@ info:
     - `featured` (boolean) → `featured` (always false for crawled events)
     
     **DO NOT use**: `venue`, `location`, `date`, `time` - these are legacy fields!
+
 servers:
   - url: https://hoppeningsagent.onrender.com
     description: Production server via Render
