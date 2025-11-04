@@ -107,23 +107,7 @@ paths:
     get:
       operationId: getBreweries
       summary: Get all breweries
-      description: |
-        Retrieve a list of all breweries in the database with their UUIDs for reference.
-        
-        **CRITICAL**: Always call this endpoint FIRST to get the correct brewery UUIDs from the database. 
-        NEVER make up or guess UUIDs - you MUST fetch them from this endpoint.
-        
-        **Brewery Instagram Account Mappings**:
-        - `urbananimaldt` Instagram → Urban Animal on Tejon (521 S Tejon St)
-        - `urbananimal` Instagram → Urban Animal on Star Ranch (3629 Star Ranch Rd)
-        - `goatpatch` Instagram → Goat Patch on Cascade (2727 N Cascade Ave)
-        - `goatpatchbrewingnorthgate` Instagram → Goat Patch Northgate (12245 Voyager Pkwy)
-        - `peaksnpinesbrew` Instagram → Events can be for BOTH locations:
-          * Peaks N Pines Fountain (212 W Illinois Ave, Fountain)
-          * Peaks N Pines Tutt (4005 Tutt Blvd, Colorado Springs)
-          You must determine which location based on event details/content.
-        
-        Always match the brewery by name AND address to get the correct UUID.
+      description: Get brewery UUIDs from database. ALWAYS call FIRST before upserting. NEVER make up UUIDs. Match by name+address. Mappings: urbananimaldt→Tejon, urbananimal→Star Ranch, goatpatch→Cascade, goatpatchbrewingnorthgate→Northgate, peaksnpinesbrew→Fountain or Tutt.
       security: [{ bearerAuth: [] }]
       responses:
         "200":
@@ -512,13 +496,7 @@ paths:
     post:
       operationId: upsertBeerReleases
       summary: Upsert beer releases to database
-      description: |
-        Insert or update beer releases in the beer_releases_base table with deduplication support.
-        
-        **CRITICAL**:
-        - ALWAYS call /breweries endpoint FIRST to get correct brewery UUIDs from database
-        - NEVER make up or guess UUIDs - must fetch from /breweries endpoint
-        - ALWAYS propose inserts in JSON format before calling this endpoint
+      description: Insert or update beer releases. ALWAYS call /breweries FIRST for UUIDs. NEVER make up UUIDs. ALWAYS propose inserts in JSON format before calling.
       security: [{ bearerAuth: [] }]
       requestBody:
         required: true
@@ -598,16 +576,7 @@ paths:
     post:
       operationId: upsertEvents
       summary: Save events to Supabase database
-      description: |
-        Insert or update events in the Supabase database.
-        
-        **CRITICAL**: 
-        - Use EXACT database schema fields (brewery_id, event_date, start_time, etc.)
-        - NOT legacy fields (venue, date, time, location).
-        - ALWAYS call /breweries endpoint FIRST to get correct brewery UUIDs from database
-        - NEVER make up or guess UUIDs - must fetch from /breweries endpoint
-        - For free events, use cost: 0 (never null)
-        - ALWAYS propose inserts in JSON format before calling this endpoint
+      description: Insert or update events. Use EXACT schema fields (brewery_id, event_date, start_time) NOT legacy fields. ALWAYS call /breweries FIRST for UUIDs. Use cost: 0 for free events. ALWAYS propose JSON before calling.
       security: [{ bearerAuth: [] }]
       requestBody:
         required: true
