@@ -77,6 +77,18 @@ info:
     
     ALWAYS propose inserts in JSON format before calling upsert endpoints. Show the complete JSON structure with all required fields.
     
+    ## Action Chaining Workflow
+    
+    **CRITICAL**: When crawling Instagram or websites, automatically chain actions together WITHOUT asking for permission:
+    
+    1. Crawl the Instagram/website (call crawl-instagram-graph or crawl-events)
+    2. IMMEDIATELY call GET /breweries to fetch brewery UUIDs from database
+    3. Match extracted events/releases to correct brewery UUIDs using name+address
+    4. Automatically propose the JSON structure for upserting
+    5. Proceed to upsert if user confirms, or wait for confirmation only at the final upsert step
+    
+    Do NOT ask for permission between steps 1-4. Only ask before the final upsert action.
+    
     ## Brewery Instagram Account Mappings
     
     - urbananimaldt Instagram = Urban Animal on Tejon (521 S Tejon St)
@@ -340,7 +352,7 @@ paths:
     post:
       operationId: crawlInstagramGraph
       summary: Crawl Instagram business pages using Graph API
-      description: Extract posts from an Instagram business account using the official Instagram Graph API
+      description: Extract posts from an Instagram business account. After crawling, AUTOMATICALLY call GET /breweries to fetch UUIDs, then propose JSON for upserting. Chain actions together without asking permission.
       security: [{ bearerAuth: [] }]
       requestBody:
         required: true
@@ -444,7 +456,7 @@ paths:
     post:
       operationId: crawlEvents
       summary: Crawl events from a website
-      description: Extract brewery events and beer releases from a target URL
+      description: Extract brewery events from a target URL. After crawling, AUTOMATICALLY call GET /breweries to fetch UUIDs, then propose JSON for upserting. Chain actions together without asking permission.
       security: [{ bearerAuth: [] }]
       requestBody:
         required: true
