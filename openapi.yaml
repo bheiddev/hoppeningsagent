@@ -107,7 +107,7 @@ paths:
     get:
       operationId: getBreweries
       summary: Get all breweries
-      description: Get brewery UUIDs from database. ALWAYS call FIRST before upserting. NEVER make up UUIDs. Match by name+address. Mappings: urbananimaldt→Tejon, urbananimal→Star Ranch, goatpatch→Cascade, goatpatchbrewingnorthgate→Northgate, peaksnpinesbrew→Fountain or Tutt.
+      description: Get brewery UUIDs from database. ALWAYS call FIRST before upserting. NEVER make up UUIDs. Match by name+address. Mappings: urbananimaldt=Tejon, urbananimal=Star Ranch, goatpatch=Cascade, goatpatchbrewingnorthgate=Northgate, peaksnpinesbrew=Fountain or Tutt.
       security: [{ bearerAuth: [] }]
       responses:
         "200":
