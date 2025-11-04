@@ -23,7 +23,11 @@ info:
     - cost (decimal) - Event cost or 0 if free
     - is_recurring (boolean) - true for weekly recurring events
     - description (text) - Event description
+ 
     - featured (boolean) - Always false for crawled events
+    - brewery_id2 (uuid, foreign key to breweries.id) - If there are two locations, true for Goat Patch, PeaksNPines, Urban Animal
+    - brewery_id3 (uuid, foreign key to breweries.id) - If there are three locations, true for Goat Patch, third location is Pikes Peak Brewing
+    - updated_at (timestamp, auto-generated)
     
     ### breweries table:
     - id (uuid, primary key)
@@ -39,24 +43,22 @@ info:
     - description (text) - Beer description
     - ABV (text) - Alcohol by volume percentage - Note: capitalized in actual schema
     - created_at (timestamp, auto-generated)
-    - brewery_id2 (uuid, foreign key to breweries.id) - If there are two locations, true for Goat Patch, PeaksNPines, Urban Animal
-    - brewery_id3 (uuid, foreign key to breweries.id) - If there are three locations, true for Goat Patch, third location is Pikes Peak Brewing
     
     ## Data Mapping (API Input to Database)
     
     **IMPORTANT**: You must provide data in the EXACT database schema format:
     
     Input fields to Database fields:
-    - `brewery_id` (uuid) maps to `brewery_id` (REQUIRED - MUST fetch from /breweries endpoint, never make up)
-    - `title` (string) maps to `title` (REQUIRED)
-    - `event_date` (YYYY-MM-DD) maps to `event_date` (REQUIRED)
-    - `start_time` (HH:MM or null) maps to `start_time`
-    - `end_time` (HH:MM or null) maps to `end_time`
-    - `cost` (number) maps to `cost` - Use 0 for free events, never null
-    - `is_recurring` (boolean) maps to `is_recurring`
-    - `description` (string) maps to `description`
-    - `url` (string) maps to `url`
-    - `featured` (boolean) maps to `featured` (always false for crawled events)
+    - `brewery_id` (uuid) to `brewery_id` (REQUIRED - MUST fetch from /breweries endpoint, never make up)
+    - `title` (string) to `title` (REQUIRED)
+    - `event_date` (YYYY-MM-DD) to `event_date` (REQUIRED)
+    - `start_time` (HH:MM or null) to `start_time`
+    - `end_time` (HH:MM or null) to `end_time`
+    - `cost` (number) to `cost` - Use 0 for free events, never null
+    - `is_recurring` (boolean) to `is_recurring`
+    - `description` (string) to `description`
+    - `url` (string) to `url`
+    - `featured` (boolean) to `featured` (always false for crawled events)
     
     **DO NOT use**: `venue`, `location`, `date`, `time` - these are legacy fields!
     
@@ -74,6 +76,14 @@ info:
     ## JSON Format Requirement
     
     ALWAYS propose inserts in JSON format before calling upsert endpoints. Show the complete JSON structure with all required fields.
+    
+    ## Brewery Instagram Account Mappings
+    
+    - urbananimaldt Instagram = Urban Animal on Tejon (521 S Tejon St)
+    - urbananimal Instagram = Urban Animal on Star Ranch (3629 Star Ranch Rd)
+    - goatpatch Instagram = Goat Patch on Cascade (2727 N Cascade Ave)
+    - goatpatchbrewingnorthgate Instagram = Goat Patch Northgate (12245 Voyager Pkwy)
+    - peaksnpinesbrew Instagram = Events can be for BOTH locations (Fountain or Tutt - determine from event details)
 servers:
   - url: https://hoppeningsagent.onrender.com
     description: Production server via Render
@@ -107,11 +117,11 @@ paths:
     get:
       operationId: getBreweries
       summary: Get all breweries
-      description: Get brewery UUIDs from database. ALWAYS call FIRST before upserting. NEVER make up UUIDs. Match by name+address. Mappings: urbananimaldt=Tejon, urbananimal=Star Ranch, goatpatch=Cascade, goatpatchbrewingnorthgate=Northgate, peaksnpinesbrew=Fountain or Tutt.
+      description: Get brewery UUIDs from database. ALWAYS call FIRST before upserting. NEVER make up UUIDs. Match by name+address. See main description for Instagram mappings.
       security: [{ bearerAuth: [] }]
       responses:
         "200":
-          description: List of breweries with their UUIDs for reference. 
+          description: List of breweries
           content:
             application/json:
               schema:
@@ -507,14 +517,14 @@ paths:
               properties:
                 releases:
                   type: array
-                  description: "Array of beer release objects to upsert. ALWAYS propose in JSON format before sending to this endpoint."
+                  description: "Array of beer release objects to upsert. ALWAYS propose in JSON format before sending."
                   items:
                     type: object
                     properties:
                       brewery_id:
                         type: string
                         format: uuid
-                        description: "Brewery UUID from /breweries endpoint (required if brewery_name not provided). NEVER make up UUIDs - always fetch from /breweries first."
+                        description: "Brewery UUID from /breweries endpoint (required if brewery_name not provided). NEVER make up UUIDs."
                       brewery_name:
                         type: string
                         description: "Brewery name (required if brewery_id not provided)"
@@ -523,7 +533,7 @@ paths:
                         description: "Beer name (required)"
                       beer_type:
                         type: string
-                        description: "Beer type should only be one word from: Ale, Blonde, Belgian, IPA, Lager, Pilsner, Porter, Stout, Sour, Wheat"
+                        description: "Beer type (Choose from: Ale, Blonde, Belgian, IPA, Lager, Pilsner, Porter, Stout, Sour, Wheat)"
                       release_date:
                         type: string
                         format: date
@@ -587,14 +597,14 @@ paths:
               properties:
                 events:
                   type: array
-                  description: "Array of events to save. ALWAYS propose in JSON format before sending to this endpoint."
+                  description: "Array of events to save. ALWAYS propose in JSON format before sending."
                   items:
                     type: object
                     properties:
                       brewery_id: 
                         type: string
                         format: uuid
-                        description: "Brewery UUID from /breweries endpoint (REQUIRED). NEVER make up UUIDs - always fetch from /breweries first."
+                        description: "Brewery UUID from /breweries endpoint (REQUIRED). NEVER make up UUIDs."
                       title: 
                         type: string
                         description: "Event title (REQUIRED)"
@@ -615,7 +625,7 @@ paths:
                         description: "Event cost - Use 0 for free events, NEVER null"
                       is_recurring: 
                         type: boolean
-                        description: "only mark true if the event happens every week on the same day and time"
+                        description: "true for weekly/recurring events"
                       description: 
                         type: string
                         description: "Event description"
