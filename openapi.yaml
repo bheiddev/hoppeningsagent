@@ -42,21 +42,21 @@ info:
     - brewery_id2 (uuid, foreign key to breweries.id) - If there are two locations, true for Goat Patch, PeaksNPines, Urban Animal
     - brewery_id3 (uuid, foreign key to breweries.id) - If there are three locations, true for Goat Patch, third location is Pikes Peak Brewing
     
-    ## Data Mapping (API Input → Database)
+    ## Data Mapping (API Input to Database)
     
     **IMPORTANT**: You must provide data in the EXACT database schema format:
     
-    Input fields → Database fields:
-    - `brewery_id` (uuid) → `brewery_id` (REQUIRED - MUST fetch from /breweries endpoint, never make up)
-    - `title` (string) → `title` (REQUIRED)
-    - `event_date` (YYYY-MM-DD) → `event_date` (REQUIRED)
-    - `start_time` (HH:MM or null) → `start_time`
-    - `end_time` (HH:MM or null) → `end_time`
-    - `cost` (number) → `cost` - Use 0 for free events, never null
-    - `is_recurring` (boolean) → `is_recurring`
-    - `description` (string) → `description`
-    - `url` (string) → `url`
-    - `featured` (boolean) → `featured` (always false for crawled events)
+    Input fields to Database fields:
+    - `brewery_id` (uuid) maps to `brewery_id` (REQUIRED - MUST fetch from /breweries endpoint, never make up)
+    - `title` (string) maps to `title` (REQUIRED)
+    - `event_date` (YYYY-MM-DD) maps to `event_date` (REQUIRED)
+    - `start_time` (HH:MM or null) maps to `start_time`
+    - `end_time` (HH:MM or null) maps to `end_time`
+    - `cost` (number) maps to `cost` - Use 0 for free events, never null
+    - `is_recurring` (boolean) maps to `is_recurring`
+    - `description` (string) maps to `description`
+    - `url` (string) maps to `url`
+    - `featured` (boolean) maps to `featured` (always false for crawled events)
     
     **DO NOT use**: `venue`, `location`, `date`, `time` - these are legacy fields!
     
