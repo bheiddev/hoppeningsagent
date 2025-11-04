@@ -222,7 +222,7 @@ paths:
                           description: "Beer name"
                         beer_type: 
                           type: string
-                          description: "Beer type"
+                          description: "Beer type - MUST be one of: Ale, IPA, Lager, Pilsner, Porter, Stout, Sour, Wheat"
                         release_date: 
                           type: string
                           format: date
@@ -547,7 +547,7 @@ paths:
                         description: "Beer name (required)"
                       beer_type:
                         type: string
-                        description: "Beer type (Choose from: Ale, Blonde, Belgian, IPA, Lager, Pilsner, Porter, Stout, Sour, Wheat)"
+                        description: "Beer type - MUST be exactly one of these 8 categories only: Ale, IPA, Lager, Pilsner, Porter, Stout, Sour, Wheat. Do NOT use any other values."
                       release_date:
                         type: string
                         format: date
