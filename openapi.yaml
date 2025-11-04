@@ -24,7 +24,7 @@ info:
     - is_recurring (boolean) - true for weekly recurring events
     - description (text) - Event description
  
-    - featured (boolean) - Always false for crawled events
+    - featured (boolean) - ALWAYS false by default. Only set to true if user explicitly requests it.
     - brewery_id2 (uuid, foreign key to breweries.id) - If there are two locations, true for Goat Patch, PeaksNPines, Urban Animal
     - brewery_id3 (uuid, foreign key to breweries.id) - If there are three locations, true for Goat Patch, third location is Pikes Peak Brewing
     - updated_at (timestamp, auto-generated)
@@ -58,7 +58,7 @@ info:
     - `is_recurring` (boolean) to `is_recurring`
     - `description` (string) to `description`
     - `url` (string) to `url`
-    - `featured` (boolean) to `featured` (always false for crawled events)
+    - `featured` (boolean) to `featured` - ALWAYS false by default. Only set to true if user explicitly requests it.
     
     **DO NOT use**: `venue`, `location`, `date`, `time` - these are legacy fields!
     
@@ -88,6 +88,8 @@ info:
     5. Proceed to upsert if user confirms, or wait for confirmation only at the final upsert step
     
     Do NOT ask for permission between steps 1-4. Only ask before the final upsert action.
+    
+    **Default Values**: Always set `featured: false` unless the user explicitly requests a specific event to be featured.
     
     ## Brewery Instagram Account Mappings
     
@@ -330,7 +332,7 @@ paths:
                           description: "Event description"
                         featured: 
                           type: boolean
-                          description: "Is featured event"
+                          description: "Is featured event (always false by default)"
                         created_at: 
                           type: string
                           format: date-time
@@ -643,7 +645,8 @@ paths:
                         description: "Event description"
                       featured: 
                         type: boolean
-                        description: "Always false for crawled events"
+                        description: "ALWAYS false by default. Only set to true if user explicitly requests it."
+                        default: false
                     required: [brewery_id, title, event_date]
                 dryRun:
                   type: boolean
