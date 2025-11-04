@@ -547,7 +547,8 @@ paths:
                         description: "Beer name (required)"
                       beer_type:
                         type: string
-                        description: "Beer type. Must be one of: Ale, IPA, Lager, Pilsner, Porter, Stout, Sour, Wheat"
+                        enum: [Ale, IPA, Lager, Pilsner, Porter, Stout, Sour, Wheat]
+                        description: "Beer type. Must be one of the 8 categories listed in enum."
                       release_date:
                         type: string
                         format: date
